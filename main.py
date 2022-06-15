@@ -30,6 +30,7 @@ for data in x: #???? Люблю монго
             print(f'\nВопрос {question["_id"]}')
 
             q_res = gtr.get_module_question(question["_id"])
+            
             for data in q_res:
                 pp.pprint(data)
 
@@ -67,21 +68,20 @@ for data in x: #???? Люблю монго
                 continue
             
             #Записать в строку ответы одного ученика
-            row = wrt.write_single_answer_data(worksheet, workbook, row, account['nickname'], answers)
+            row = wrt.write_single_answer_data(worksheet, workbook, row, account['nickname'], answers, result['questionIds'], q_data['questions'])
 
             #Запомнить строки в которых находятся результаты одного класса
             already_written_results_by_student_id.append(account['nickname'])
-
                
         
         #Нарисовать формулу со статистикой этого класса
         col = 2
-        for i in range(2, len(module_questions), 1):
+        for i in range(2, len(module_questions)+2, 1):
 
             
             worksheet.write(3, col, f'=COUNTIF({xl_rowcol_to_cell(row-1, col)}:{xl_rowcol_to_cell(row_start, col)}, "1")')
             worksheet.write(2, col, f'=COUNTIF({xl_rowcol_to_cell(row-1, col)}:{xl_rowcol_to_cell(row_start, col)}, "0")') 
-            worksheet.write(1, col, f'=IFERROR({xl_rowcol_to_cell(2, col)}/({xl_rowcol_to_cell(3,col)}+{xl_rowcol_to_cell(2,col)}),0)')
+#            worksheet.write(1, col, f'=IFERROR({xl_rowcol_to_cell(2, col)}/({xl_rowcol_to_cell(3,col)}+{xl_rowcol_to_cell(2,col)}),0)')
             worksheet.write(1, col, f'=IFERROR({xl_rowcol_to_cell(3, col)}/({xl_rowcol_to_cell(3,col)}+{xl_rowcol_to_cell(2,col)}),0)')
 
             worksheet.conditional_format(
@@ -99,23 +99,19 @@ for data in x: #???? Люблю монго
                         "mid_type": 'num'
                         }
                 )
-
-
-           #worksheet.write(rowP, colP+i, f'=IFERROR({cell_c_answ}/({cell_w_answ}+{cell_c_answ}), 1)', cell_format)
-           #worksheet.write(rowC, colC+i, f'=COUNTIF({data["data_cells"][0]}:{data["data_cells"][1]}, "1")')
-           #worksheet.write(rowI, colI+i, f'=COUNTIF({data["data_cells"][0]}:{data["data_cells"][1]}, "0")')
-
-
             col += 1
 
         #Добавить условное форматирование 
         #Добавить возможность сортировать данные внутри класса
         #Добавить дерева?
 
-
         print(f'Получение результатов модуля {result["name"]}...')
         print('\nИнформация о модуле:')
         pp.pprint(result)
+        
+        for qst in result['questionIds']:
+            print(qst)
+
         print('\n')
 
 

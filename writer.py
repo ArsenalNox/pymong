@@ -2,6 +2,7 @@
 Записывает результаты в Excel
 """
 
+from bson.objectid import ObjectId
 import xlsxwriter
 
 from xlsxwriter.utility   import xl_cell_to_rowcol, xl_rowcol_to_cell 
@@ -33,27 +34,50 @@ def write_question_header(worksheet, row, q_num, workbook):
     return row+4
 
 
-def write_single_answer_data(worksheet, workbook, row, nickname, answer_data):
+def write_single_answer_data(worksheet, workbook, row, nickname, answer_data, questions, q_data_orig):
+
+    def get_q_number(index, q_data_orig, questions):
+        global answer_data
+        
+        iterator2 = 0
+        for question in questions:
+            if ObjectId(q_data_orig[index]['questionId']) == ObjectId(question['_id']):
+                
+                return iterator2
+
+            iterator2 += 1
+        return 1
+        
+    #First we need to lay gray area 
+
     worksheet.write(row, 1, nickname)
     col = 2
-
+    
+    grey_formaty = workbook.add_format({'bg_color': 'AAAAAA'})
     green_format = workbook.add_format({'bg_color': '00dd00'})
     red_format   = workbook.add_format({'bg_color': 'dd0000'})
-    
+ 
+    for i in range(2, len(questions)+2, 1):
+        worksheet.write(row, i, '', grey_formaty)
+
+   
     corr_answ = 0
+    iterator = 0
+
     for answ in answer_data:
+
+        col2 = get_q_number(iterator, q_data_orig, questions) + 2
+
         if answ: 
-            worksheet.write(row, col, '1', green_format)
+            #Need to change row to positional number of question in module
+            worksheet.write(row, col2, '1', green_format)    
             corr_answ+=1
 
         else: 
-            worksheet.write(row, col, '0', red_format)
+            worksheet.write(row, col2, '0', red_format)
 
         col+=1
-    if corr_answ != 0:
-        worksheet.write(row, col, f'{corr_answ/len(answer_data)}')
-    else:
-        worksheet.write(row, col, f'0')
+        iterator+=1
 
 
         worksheet.conditional_format(
@@ -74,4 +98,3 @@ def write_single_answer_data(worksheet, workbook, row, nickname, answer_data):
 
 
     return row+1
-
