@@ -3,11 +3,11 @@ import getter as gtr
 import pprint  as pp
 import writer  as wrt
 
+from xlsxwriter.utility   import xl_cell_to_rowcol, xl_rowcol_to_cell 
 from datab import client
 
 needed_modules = [ #названия модулей, по которым происходит выгрузка
-        "Фонетика и графика",
-        "Арифметические действия"
+        "Арифметические действия",
         ]
 
 x = gtr.get_modules_collections(needed_modules)
@@ -45,27 +45,69 @@ for data in x: #???? Люблю монго
         already_written_results_by_student_id = []
         all_answers = gtr.get_module_answers(result['_id'])
         
-        
-        print('\nОтветы на модуль')
+        row_start = row
+
+        print(f'Начальная строка: {row}')
+        print('\nОтветы на модуль') 
         #Начать итерацию над всеми ответами 
         for q_data in all_answers:
             print('\n')
             pp.pprint(q_data)
+            answers = []
+            iterator = 0
+            for tdt in q_data['questions']:
+                answers.append( tdt['isCorrect'])
 
             account = gtr.get_test_result_account_by_id(q_data["accountId"])
             print(account['nickname'])
+            print(answers)
 
             #Проверить, ни записанн ли уже результат этого ученикеа 
             if account['nickname'] in already_written_results_by_student_id:
                 continue
             
             #Записать в строку ответы одного ученика
-            row = wrt.write_single_answer_data(worksheet, workbook, row, account['nickname'], 'test')
+            row = wrt.write_single_answer_data(worksheet, workbook, row, account['nickname'], answers)
 
+            #Запомнить строки в которых находятся результаты одного класса
             already_written_results_by_student_id.append(account['nickname'])
 
-        #Запомнить строки в которых находятся результаты одного класса
+               
+        
         #Нарисовать формулу со статистикой этого класса
+        col = 2
+        for i in range(2, len(module_questions), 1):
+
+            
+            worksheet.write(3, col, f'=COUNTIF({xl_rowcol_to_cell(row-1, col)}:{xl_rowcol_to_cell(row_start, col)}, "1")')
+            worksheet.write(2, col, f'=COUNTIF({xl_rowcol_to_cell(row-1, col)}:{xl_rowcol_to_cell(row_start, col)}, "0")') 
+            worksheet.write(1, col, f'=IFERROR({xl_rowcol_to_cell(2, col)}/({xl_rowcol_to_cell(3,col)}+{xl_rowcol_to_cell(2,col)}),0)')
+            worksheet.write(1, col, f'=IFERROR({xl_rowcol_to_cell(3, col)}/({xl_rowcol_to_cell(3,col)}+{xl_rowcol_to_cell(2,col)}),0)')
+
+            worksheet.conditional_format(
+                    f'C2:T2',
+                    {
+                        "type": '3_color_scale',
+                        "min_color": 'red',
+                        "mid_color": 'yellow',
+                        "max_color": 'green',
+                        "mid_value": '50%',
+                        "max_value": '100%',
+                        "min_value": '0%',
+                        "min_type": 'num',
+                        "max_type": 'num',
+                        "mid_type": 'num'
+                        }
+                )
+
+
+           #worksheet.write(rowP, colP+i, f'=IFERROR({cell_c_answ}/({cell_w_answ}+{cell_c_answ}), 1)', cell_format)
+           #worksheet.write(rowC, colC+i, f'=COUNTIF({data["data_cells"][0]}:{data["data_cells"][1]}, "1")')
+           #worksheet.write(rowI, colI+i, f'=COUNTIF({data["data_cells"][0]}:{data["data_cells"][1]}, "0")')
+
+
+            col += 1
+
         #Добавить условное форматирование 
         #Добавить возможность сортировать данные внутри класса
         #Добавить дерева?

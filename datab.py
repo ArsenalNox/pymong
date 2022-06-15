@@ -1,3 +1,3 @@
 import pymongo
 
-client = pymongo.MongoClient("192.168.100.129:27017")
+client = pymongo.MongoClient("192.168.194.142:27017")
